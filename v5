@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journalpost-visning v5</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #0f62fe;
+      --primary-dark: #0043ce;
+      --warning: #f59e0b;
+      --success: #16a34a;
+      --chip: #eef2ff;
+      --shadow: 0 8px 20px rgba(0,0,0,0.08);
+      --radius: 16px;
+      --highlight-bg: #fef2f2;
+      --highlight-border: #fecaca;
+      --highlight-text: #991b1b;
+      --soft-bg: #f9fafb;
+      --dok-md-bg: #dbeafe;
+      --dok-md-text: #1d4ed8;
+      --dok-md-border: #93c5fd;
+      --dok-od-bg: #fef3c7;
+      --dok-od-text: #92400e;
+      --dok-od-border: #fcd34d;
+      --dok-default-bg: #e5e7eb;
+      --dok-default-text: #374151;
+      --dok-default-border: #d1d5db;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(244, 246, 248, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 18px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .title-wrap h1 { margin: 0; font-size: 1.5rem; }
+    .title-wrap p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .tabs, .sort-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .tab-btn, .action-btn, .file-label, .sort-btn {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn.active, .sort-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .tab-btn:hover, .action-btn:hover, .file-label:hover, .sort-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .file-label { background: #fff; }
+    input[type="file"] { display: none; }
+
+    .search-box { min-width: 220px; max-width: 320px; width: 100%; }
+    .search-box input {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    .summary {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 10px 20px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+    .stat-label { font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; }
+
+    main { max-width: 1400px; margin: 0 auto; padding: 0 20px 40px; }
+
+    .empty-state {
+      background: white;
+      padding: 40px 24px;
+      text-align: center;
+      border-radius: var(--radius);
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      margin-top: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      border: 1px solid rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-title { margin: 0; font-size: 1.08rem; line-height: 1.3; }
+
+    .top-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 0.85rem;
+      line-height: 1;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .meta-label { color: var(--muted); font-weight: 700; }
+
+    .dokkat-pill {
+      border-width: 1px;
+      border-style: solid;
+    }
+    .dokkat-pill.md {
+      background: var(--dok-md-bg);
+      color: var(--dok-md-text);
+      border-color: var(--dok-md-border);
+    }
+    .dokkat-pill.od {
+      background: var(--dok-od-bg);
+      color: var(--dok-od-text);
+      border-color: var(--dok-od-border);
+    }
+    .dokkat-pill.default {
+      background: var(--dok-default-bg);
+      color: var(--dok-default-text);
+      border-color: var(--dok-default-border);
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      background: var(--chip);
+      color: #3730a3;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .chip.warning { background: #fff7ed; color: #c2410c; }
+    .chip.success { background: #ecfdf5; color: #166534; }
+
+    .details {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding-top: 4px;
+      border-top: 1px solid #eef0f3;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 0.95rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+
+    .field.highlight {
+      background: var(--highlight-bg);
+      border: 1px solid var(--highlight-border);
+    }
+
+    .field-key {
+      color: var(--muted);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .field-value {
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .field.highlight .field-key,
+    .field.highlight .field-value {
+      color: var(--highlight-text);
+      font-weight: 700;
+    }
+
+    .compact-section {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      background: var(--soft-bg);
+      border: 1px solid #eef0f3;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+
+    .compact-row { display: grid; gap: 10px; }
+    .compact-row.two { grid-template-columns: 1fr 1fr; }
+    .compact-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    .compact-item {
+      padding: 10px 12px;
+      background: white;
+      border: 1px solid #eef0f3;
+      border-radius: 10px;
+      min-height: 62px;
+    }
+
+    .compact-item.highlight {
+      background: var(--highlight-bg);
+      border-color: var(--highlight-border);
+    }
+
+    .compact-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .compact-item.highlight .compact-label,
+    .compact-item.highlight .compact-value {
+      color: var(--highlight-text);
+      font-weight: 700;
+    }
+
+    .compact-value {
+      font-size: 0.95rem;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 6px;
+    }
+
+    .action-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .action-btn.primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    .action-btn.warning { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+    .action-btn.success { background: #ecfdf5; color: #166534; border-color: #bbf7d0; }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .compact-row.three { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .field, .compact-row.two, .compact-row.three { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="title-wrap">
+        <h1>Journalpost-visning fra Excel</h1>
+        <p>Testprosjekt for lesing av OEP-rapport med utgangspunkt i eksport.</p>
+      </div>
+
+      <div class="controls">
+        <label class="file-label">
+          Last inn Excel
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+        </label>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-view="all">Alle elementer</button>
+          <button class="tab-btn" data-view="followup">Til oppfølging</button>
+        </div>
+
+        <div class="sort-controls">
+          <button class="sort-btn active" data-sort="default">Standard</button>
+          <button class="sort-btn" data-sort="title">Tittel A–Å</button>
+          <button class="sort-btn" data-sort="dokkat">Dok.kat. A–Å</button>
+        </div>
+
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Søk i elementene..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="stat-card">
+        <div class="stat-label">Totalt antall elementer</div>
+        <div class="stat-value" id="totalCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Til oppfølging</div>
+        <div class="stat-value" id="followupCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Markert som fulgt opp</div>
+        <div class="stat-value" id="completedCount">0</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="content"></div>
+    <div class="footer-note">Merk: Hvis Excel-arket har to kolonner med samme navn, blir den andre automatisk gitt et eget navn internt.</div>
+  </main>
+
+  <script>
+    const COLUMN_ORDER = [
+      "Offentlig JP tittel",
+      "JP tittel",
+      "Sakstittel",
+      "Type",
+      "Saksnr",
+      "Nr",
+      "Løpenr",
+      "Journ.dato",
+      "Dok.dato",
+      "Adm.enh",
+      "Saksansvarlig",
+      "Tg.kode",
+      "Hjemmel",
+      "Klassering",
+      "Dok. kat.",
+      "Saksbeh.",
+      "Offentlig Avs/Mot",
+      "Avs/Mot",
+      "Av. dato"
+    ];
+
+    const DISPLAY_LABELS = {
+      "Offentlig JP tittel": "Offentlig tittel",
+      "JP tittel": "Intern tittel",
+      "Sakstittel": "Sak",
+      "Type": "Dokumenttype",
+      "Saksnr": "Saksnummer",
+      "Nr": "Dok.nr.",
+      "Løpenr": "Løpenummer",
+      "Journ.dato": "Journaldato",
+      "Dok.dato": "Dokumentdato",
+      "Adm.enh": "Enhet",
+      "Saksansvarlig": "Saksansvarlig",
+      "Tg.kode": "Tilgangskode",
+      "Hjemmel": "Hjemmel",
+      "Klassering": "Klassering",
+      "Dok. kat.": "Dok.kat.",
+      "Saksbeh.": "Saksbehandler",
+      "Offentlig Avs/Mot": "Offentlig avsender/mottaker",
+      "Avs/Mot": "Avsender/mottaker",
+      "Av. dato": "Avskrevet dato"
+    };
+
+    const HIGHLIGHT_FIELDS = ["Tg.kode", "Hjemmel"];
+    const TITLE_KEYS = ["Offentlig JP tittel", "JP tittel", "Sakstittel"];
+    const BOTTOM_GROUPED_FIELDS = new Set([
+      "Saksnr", "Nr", "Journ.dato", "Dok.dato", "Adm.enh", "Saksansvarlig",
+      "Tg.kode", "Hjemmel", "Saksbeh.", "Offentlig Avs/Mot", "Avs/Mot"
+    ]);
+
+    let rows = [];
+    let currentView = "all";
+    let currentSort = "default";
+    let searchTerm = "";
+    let statusMap = loadStatusMap();
+
+    const fileInput = document.getElementById("fileInput");
+    const content = document.getElementById("content");
+    const totalCount = document.getElementById("totalCount");
+    const followupCount = document.getElementById("followupCount");
+    const completedCount = document.getElementById("completedCount");
+    const searchInput = document.getElementById("searchInput");
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const sortButtons = document.querySelectorAll(".sort-btn");
+
+    fileInput.addEventListener("change", handleFileUpload);
+    searchInput.addEventListener("input", (e) => {
+      searchTerm = e.target.value.toLowerCase().trim();
+      render();
+    });
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentView = btn.dataset.view;
+        tabButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      });
+    });
+
+    sortButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentSort = btn.dataset.sort;
+        sortButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      });
+    });
+
+    function loadStatusMap() {
+      try {
+        return JSON.parse(localStorage.getItem("excelKortStatusMap")) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveStatusMap() {
+      localStorage.setItem("excelKortStatusMap", JSON.stringify(statusMap));
+    }
+
+    async function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array", cellDates: true });
+      const firstSheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[firstSheetName];
+
+      const matrix = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        raw: false,
+        defval: "",
+        blankrows: false,
+        dateNF: "dd.mm.yyyy"
+      });
+
+      if (!matrix.length) {
+        rows = [];
+        render();
+        return;
+      }
+
+      const rawHeaders = matrix[0].map(h => String(h || "").trim());
+      const headers = normalizeHeaders(makeUniqueHeaders(rawHeaders));
+      const bodyRows = matrix.slice(1).filter(r => r.some(cell => String(cell).trim() !== ""));
+
+      rows = bodyRows.map((rowArr, index) => {
+        const obj = {};
+        headers.forEach((header, colIndex) => {
+          obj[header] = normalizeCellValue(rowArr[colIndex] ?? "");
+        });
+        return {
+          __id: createRowId(obj, index),
+          __title: createTitle(obj, index),
+          __originalIndex: index,
+          ...obj
+        };
+      });
+
+      render();
+    }
+
+    function makeUniqueHeaders(headers) {
+      const counts = {};
+      return headers.map((header, index) => {
+        const clean = header || `Kolonne ${index + 1}`;
+        counts[clean] = (counts[clean] || 0) + 1;
+        if (counts[clean] === 1) return clean;
+        return `${clean} (${counts[clean]})`;
+      });
+    }
+
+    function normalizeHeaders(headers) {
+      return headers.map(header => {
+        if (header === "Avs/Mot") return "Offentlig Avs/Mot";
+        if (header === "Avs/Mot (2)") return "Avs/Mot";
+        return header;
+      });
+    }
+
+    function normalizeCellValue(value) {
+      if (value === null || value === undefined) return "";
+      if (value instanceof Date) return formatDate(value);
+      return String(value).trim();
+    }
+
+    function formatDate(dateObj) {
+      if (!(dateObj instanceof Date) || isNaN(dateObj)) return "";
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const year = dateObj.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+
+    function createRowId(row, index) {
+      const base = JSON.stringify(row) + "|" + index;
+      let hash = 0;
+      for (let i = 0; i < base.length; i++) {
+        hash = ((hash << 5) - hash) + base.charCodeAt(i);
+        hash |= 0;
+      }
+      return "row_" + Math.abs(hash);
+    }
+
+    function createTitle(row, index) {
+      for (const key of TITLE_KEYS) {
+        if (row[key] !== undefined && String(row[key]).trim() !== "") return String(row[key]).trim();
+      }
+      for (const key of Object.keys(row)) {
+        if (String(row[key]).trim() !== "") return String(row[key]).trim();
+      }
+      return `Element ${index + 1}`;
+    }
+
+    function getStatus(id) {
+      return statusMap[id] || { followup: false, completed: false };
+    }
+
+    function toggleFollowup(id) {
+      const current = getStatus(id);
+      statusMap[id] = {
+        followup: !current.followup,
+        completed: current.followup ? false : current.completed
+      };
+      saveStatusMap();
+      render();
+    }
+
+    function toggleCompleted(id) {
+      const current = getStatus(id);
+      statusMap[id] = {
+        followup: true,
+        completed: !current.completed
+      };
+      saveStatusMap();
+      render();
+    }
+
+    function getVisibleRows() {
+      let filtered = [...rows];
+      if (currentView === "followup") filtered = filtered.filter(row => getStatus(row.__id).followup);
+      if (searchTerm) {
+        filtered = filtered.filter(row => {
+          const combined = Object.entries(row)
+            .filter(([key]) => !key.startsWith("__"))
+            .map(([key, value]) => `${key} ${value}`)
+            .join(" ")
+            .toLowerCase();
+          return combined.includes(searchTerm);
+        });
+      }
+      return sortRows(filtered);
+    }
+
+    function sortRows(list) {
+      const sorted = [...list];
+      if (currentSort === "default") {
+        sorted.sort((a, b) => a.__originalIndex - b.__originalIndex);
+      } else if (currentSort === "title") {
+        sorted.sort((a, b) => String(a.__title || "").localeCompare(String(b.__title || ""), "no", { sensitivity: "base" }));
+      } else if (currentSort === "dokkat") {
+        sorted.sort((a, b) => String(a["Dok. kat."] || "").localeCompare(String(b["Dok. kat."] || ""), "no", { sensitivity: "base" }));
+      }
+      return sorted;
+    }
+
+    function updateCounters() {
+      totalCount.textContent = rows.length;
+      followupCount.textContent = rows.filter(r => getStatus(r.__id).followup).length;
+      completedCount.textContent = rows.filter(r => getStatus(r.__id).followup && getStatus(r.__id).completed).length;
+    }
+
+    function render() {
+      updateCounters();
+      if (!rows.length) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <h2>Ingen data lastet inn ennå</h2>
+            <p>Velg en Excel-fil (.xlsx, .xls eller .csv) for å vise innholdet som oversiktlige kort.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const visibleRows = getVisibleRows();
+      if (!visibleRows.length) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <h2>Ingen treff i denne visningen</h2>
+            <p>Prøv et annet søk, eller bytt mellom <strong>Alle elementer</strong> og <strong>Til oppfølging</strong>.</p>
+          </div>
+        `;
+        return;
+      }
+
+      content.innerHTML = `<div class="grid">${visibleRows.map(renderCard).join("")}</div>`;
+      bindCardActions();
+    }
+
+    function renderCard(row) {
+      const status = getStatus(row.__id);
+      const topMeta = renderTopMeta(row);
+      const detailFields = getOrderedFields(row)
+        .filter(([key]) => !BOTTOM_GROUPED_FIELDS.has(key))
+        .map(([key, value]) => renderField(key, value))
+        .join("");
+      const compactSection = renderCompactSection(row);
+
+      const chips = [];
+      if (status.followup) chips.push(`<span class="chip warning">Krever oppfølging</span>`);
+      if (status.followup && status.completed) chips.push(`<span class="chip success">Fulgt opp</span>`);
+
+      let actions = "";
+      if (!status.followup) {
+        actions += `<button class="action-btn warning" data-action="toggle-followup" data-id="${row.__id}">Krever oppfølging</button>`;
+      } else {
+        actions += `<button class="action-btn primary" data-action="toggle-followup" data-id="${row.__id}">Fjern fra oppfølging</button>`;
+        actions += `<button class="action-btn ${status.completed ? "success" : "primary"}" data-action="toggle-completed" data-id="${row.__id}">${status.completed ? "Angre fulgt opp" : "Marker som fulgt opp"}</button>`;
+      }
+
+      return `
+        <article class="card">
+          <div>
+            ${topMeta}
+            <h3 class="card-title">${escapeHtml(row.__title)}</h3>
+          </div>
+          ${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}
+          <div class="details">${detailFields}</div>
+          ${compactSection}
+          <div class="card-actions">${actions}</div>
+        </article>
+      `;
+    }
+
+    function renderTopMeta(row) {
+      const typeValue = row["Type"] || "—";
+      const saksnrCombined = getSaksnrCombined(row);
+      const dokkatValue = row["Dok. kat."] || "";
+      const dokkatClass = getDokkatClass(dokkatValue);
+
+      return `
+        <div class="top-meta">
+          <span class="meta-pill"><span class="meta-label">Dokumenttype</span>${escapeHtml(typeValue)}</span>
+          <span class="meta-pill"><span class="meta-label">Sak/dok</span>${escapeHtml(saksnrCombined)}</span>
+          ${dokkatValue ? `<span class="meta-pill dokkat-pill ${dokkatClass}"><span class="meta-label">Dok.kat.</span>${escapeHtml(dokkatValue)}</span>` : ''}
+        </div>
+      `;
+    }
+
+    function getSaksnrCombined(row) {
+      const saksnr = String(row["Saksnr"] || "").trim();
+      const nr = String(row["Nr"] || "").trim();
+      if (saksnr && nr) return `${saksnr}-${nr}`;
+      return saksnr || nr || "—";
+    }
+
+    function getDokkatClass(value) {
+      const v = String(value || "").trim().toUpperCase();
+      if (v === "MD") return "md";
+      if (v === "OD") return "od";
+      return "default";
+    }
+
+    function renderCompactSection(row) {
+      const groupRows = [
+        ["Journ.dato", "Dok.dato"],
+        ["Adm.enh", "Saksansvarlig"],
+        ["Tg.kode", "Hjemmel"],
+        ["Saksbeh.", "Offentlig Avs/Mot", "Avs/Mot"]
+      ];
+
+      const html = groupRows.map(group => {
+        const presentKeys = group.filter(key => row.hasOwnProperty(key));
+        const cls = presentKeys.length >= 3 ? 'three' : 'two';
+        return `
+          <div class="compact-row ${cls}">
+            ${presentKeys.map(key => renderCompactItem(key, row[key])).join('')}
+          </div>
+        `;
+      }).join('');
+
+      return `<div class="compact-section">${html}</div>`;
+    }
+
+    function renderCompactItem(key, value) {
+      const shouldHighlight = HIGHLIGHT_FIELDS.includes(key) && value && String(value).trim() !== "";
+      const label = DISPLAY_LABELS[key] || key;
+      return `
+        <div class="compact-item ${shouldHighlight ? 'highlight' : ''}">
+          <div class="compact-label">${escapeHtml(label)}</div>
+          <div class="compact-value">${formatValue(value)}</div>
+        </div>
+      `;
+    }
+
+    function renderField(key, value) {
+      const hasContent = value !== null && value !== undefined && String(value).trim() !== "";
+      const shouldHighlight = HIGHLIGHT_FIELDS.includes(key) && hasContent;
+      const label = DISPLAY_LABELS[key] || key;
+      return `
+        <div class="field ${shouldHighlight ? "highlight" : ""}">
+          <div class="field-key">${escapeHtml(label)}</div>
+          <div class="field-value">${formatValue(value)}</div>
+        </div>
+      `;
+    }
+
+    function getOrderedFields(row) {
+      const allFields = Object.entries(row).filter(([key]) => !key.startsWith("__"));
+      const ordered = [];
+      const used = new Set();
+      for (const col of COLUMN_ORDER) {
+        if (row.hasOwnProperty(col)) {
+          ordered.push([col, row[col]]);
+          used.add(col);
+        }
+      }
+      for (const [key, value] of allFields) {
+        if (!used.has(key)) ordered.push([key, value]);
+      }
+      return ordered;
+    }
+
+    function bindCardActions() {
+      document.querySelectorAll("[data-action='toggle-followup']").forEach(btn => {
+        btn.addEventListener("click", () => toggleFollowup(btn.dataset.id));
+      });
+      document.querySelectorAll("[data-action='toggle-completed']").forEach(btn => {
+        btn.addEventListener("click", () => toggleCompleted(btn.dataset.id));
+      });
+    }
+
+    function formatValue(value) {
+      if (value === null || value === undefined || value === "") {
+        return `<span style="color:#9ca3af;">—</span>`;
+      }
+      const str = String(value);
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str)) {
+        return `<a href="mailto:${escapeAttr(str)}">${escapeHtml(str)}</a>`;
+      }
+      if (/^https?:\/\//i.test(str)) {
+        return `<a href="${escapeAttr(str)}" target="_blank" rel="noopener noreferrer">${escapeHtml(str)}</a>`;
+      }
+      return escapeHtml(str);
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(text) {
+      return String(text).replaceAll('"', "&quot;");
+    }
+
+    render();
+  </script>
+</body>
+</html>
