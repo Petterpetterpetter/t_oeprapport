@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veiledning – Journalpostvisning</title>
+
+<style>
+body{
+    font-family:Segoe UI, Arial, sans-serif;
+    margin:0;
+    background:#f5f7fa;
+    color:#1f2937;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:40px 20px;
+}
+
+h1{
+    margin-top:0;
+}
+
+.card{
+    background:white;
+    padding:24px;
+    margin-bottom:16px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+.step{
+    background:#2563eb;
+    color:white;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    margin-bottom:12px;
+}
+
+ul{
+    padding-left:20px;
+}
+
+.highlight{
+    background:#eef6ff;
+    border-left:4px solid #2563eb;
+    padding:12px;
+    border-radius:6px;
+}
+
+footer{
+    text-align:center;
+    color:#6b7280;
+    margin-top:30px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>Veiledning for Journalpostvisning</h1>
+
+<p>
+Verktøyet gir en enkel og oversiktlig visning av journalposter fra
+Excel, XML og (senere) pdf/Word-rapporter fra Elements.
+</p>
+
+<div class="card">
+<div class="step">1</div>
+<h2>Last inn en fil</h2>
+
+<ul>
+<li>Last ned fil, enten XMLen eller en eksport fra Excel (eller PDF/word-rapport)</li>
+<li>Dra filen inn i opplastningsfeltet.</li>
+<li>Du kan også klikke på opplastningsfeltet for å velge fil.</li>
+<li>Støttede formater: Excel (.xlsx), XML og andre støttede rapportformat.</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="step">2</div>
+<h2>Søk og filtrer</h2>
+
+<ul>
+<li>Bruk søkefeltet for å finne bestemte journalposter.</li>
+<li>Åpne <strong>Filtrering</strong> for å avgrense utvalget.</li>
+<li>Filtrer på klassering, dokumenttype eller andre tilgjengelige filtre.</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="step">3</div>
+<h2>Les journalpostene</h2>
+
+<ul>
+<li>Kortvisning gir en detaljert oversikt.</li>
+<li>eInnsyn-visning viser informasjon i tabellformat.</li>
+<li>Klikk på kopieringsikonene for rask kopiering av saksnummer eller sak/dok-referanser.</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="step">4</div>
+<h2>Oppfølging</h2>
+
+<ul>
+<li>Marker journalposter som krever oppfølging.</li>
+<li>Se alle markerte saker via visningen <strong>Til oppfølging</strong>.</li>
+<li>Eksporter en PDF-rapport over sakene ved behov.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Tegn og markeringer</h2>
+
+<div class="highlight">
+<strong>Personnavn markeres med gul/grønn farge.</strong><br>
+Dette gjør det enklere å se journalposter som gjelder enkeltpersoner.
+</div>
+
+<br>
+
+<div class="highlight">
+<strong>Kopieringsknapp</strong><br>
+Brukes for å kopiere saksnummer eller sak/dok-referanse direkte til utklippstavlen.
+</div>
+</div>
+
+<div class="card">
+<h2>Tips</h2>
+
+<ul>
+<li>Bruk klassering-filteret for raskt å finne saker innen et bestemt område.</li>
+<li>Bruk «Vis kun uten klassering» for kontroll og kvalitetssikring.</li>
+<li>Bruk PDF-rapporten som møte- eller oppfølgingsliste.</li>
+</ul>
+</div>
+
+<footer>
+Journalpostvisning – brukerveiledning
+</footer>
+
+</div>
+
+</body>
+</html>
